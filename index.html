@@ -64,9 +64,7 @@
         
         /* Animations */
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes zoom-in { from { transform: scale(0.95); } to { transform: scale(1); } }
         .animate-fade-in { animation: fade-in 0.3s ease-out; }
-        .animate-zoom-in { animation: zoom-in 0.3s ease-out; }
     </style>
 </head>
 <body class="flex flex-col h-screen">
@@ -169,7 +167,7 @@
         <!-- RIGHT SIDEBAR (Now Playing) -->
         <aside id="right-sidebar" class="w-[280px] bg-[#121212] rounded-lg p-4 hidden xl:flex flex-col">
             <div class="flex justify-between items-center mb-6 text-[#b3b3b3]">
-                <span class="font-bold hover:text-white cursor-pointer">Top Hits 2024</span>
+                <span class="font-bold hover:text-white cursor-pointer" id="queue-title">Queue</span>
                 <button onclick="toggleRightSidebar()"><i data-lucide="x" class="w-5 h-5 hover:text-white"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto custom-scrollbar">
@@ -304,18 +302,11 @@
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
         // --- DATA ---
-        // Updated with official Spotify Image URLs (approximate public CDN) and YouTube IDs
-        const SONGS = [
-            { id: 1, title: "Cruel Summer", artist: "Taylor Swift", album: "Lover", duration: 178, cover: "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647", color: "from-pink-500", hex: "#ec4899", youtubeId: "ic8j13piAhQ" },
-            { id: 2, title: "Starboy", artist: "The Weeknd", album: "Starboy", duration: 230, cover: "https://i.scdn.co/image/ab67616d0000b2734718e28d24527d9c951a4260", color: "from-red-600", hex: "#dc2626", youtubeId: "34Na4j8AVgA" },
-            { id: 3, title: "As It Was", artist: "Harry Styles", album: "Harry's House", duration: 167, cover: "https://i.scdn.co/image/ab67616d0000b2732e8f4f45e6df8f88114098bc", color: "from-blue-400", hex: "#60a5fa", youtubeId: "H5v3kku4y6Q" },
-            { id: 4, title: "Anti-Hero", artist: "Taylor Swift", album: "Midnights", duration: 200, cover: "https://i.scdn.co/image/ab67616d0000b273bb54dde5369e8c4b45fa8d6c", color: "from-slate-700", hex: "#334155", youtubeId: "b1kbLwvqugk" },
-            { id: 5, title: "Flowers", artist: "Miley Cyrus", album: "Endless Summer Vacation", duration: 200, cover: "https://i.scdn.co/image/ab67616d0000b27358039b5148108c7d342f0a8c", color: "from-amber-500", hex: "#f59e0b", youtubeId: "G7KNmW9a75Y" },
-            { id: 6, title: "Kill Bill", artist: "SZA", album: "SOS", duration: 153, cover: "https://i.scdn.co/image/ab67616d0000b27370dbc9f47669d120ad874ec1", color: "from-indigo-800", hex: "#3730a3", youtubeId: "MSRcC626prw" },
-            { id: 7, title: "Creep", artist: "Radiohead", album: "Pablo Honey", duration: 238, cover: "https://i.scdn.co/image/ab67616d0000b273df55e326ed144ab4f5cecf95", color: "from-yellow-600", hex: "#ca8a04", youtubeId: "XFkzRNyygfk" },
-            { id: 8, title: "Seven Nation Army", artist: "The White Stripes", album: "Elephant", duration: 231, cover: "https://i.scdn.co/image/ab67616d0000b273b54cb118a80373079b940082", color: "from-red-800", hex: "#991b1b", youtubeId: "0J2QdDbelmY" },
-            { id: 9, title: "Vampire", artist: "Olivia Rodrigo", album: "GUTS", duration: 219, cover: "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d", color: "from-purple-700", hex: "#7e22ce", youtubeId: "RlPNh_PBZb4" },
-            { id: 10, title: "Paint The Town Red", artist: "Doja Cat", album: "Scarlet", duration: 231, cover: "https://i.scdn.co/image/ab67616d0000b27372bf1b4907106c579c5c2a47", color: "from-red-600", hex: "#dc2626", youtubeId: "m4_9TFeMfJE" },
+        let SONGS = [
+            { id: 1, title: "Cruel Summer", artist: "Taylor Swift", album: "Lover", duration: 178, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/39/3c/65/393c65e8-e565-d064-071a-6379c1485c2c/19UMGIM53909.rgb.jpg/600x600bb.jpg", color: "from-pink-500", hex: "#ec4899", youtubeId: "ic8j13piAhQ" },
+            { id: 2, title: "Starboy", artist: "The Weeknd", album: "Starboy", duration: 230, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4b/32/34/4b3234f2-9844-486a-7d9a-1c7fa1544dd0/16UMGIM48521.rgb.jpg/600x600bb.jpg", color: "from-red-600", hex: "#dc2626", youtubeId: "34Na4j8AVgA" },
+            { id: 3, title: "As It Was", artist: "Harry Styles", album: "Harry's House", duration: 167, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196589560625.jpg/600x600bb.jpg", color: "from-blue-400", hex: "#60a5fa", youtubeId: "H5v3kku4y6Q" },
+            { id: 4, title: "Flowers", artist: "Miley Cyrus", album: "Endless Summer Vacation", duration: 200, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/64/07/78/640778c8-b52e-c350-13b6-97699318a666/196589561059.jpg/600x600bb.jpg", color: "from-amber-500", hex: "#f59e0b", youtubeId: "G7KNmW9a75Y" }
         ];
 
         const PLAYLISTS = [
@@ -347,6 +338,7 @@
         let isRepeat = false;
         let currentView = 'home';
         let player; // YouTube Player Instance
+        let debounceTimer;
         
         // --- DOM ELEMENTS ---
         const homeView = document.getElementById('home-view');
@@ -369,12 +361,73 @@
                 mainHeader.style.backgroundColor = `rgba(18, 18, 18, ${opacity})`;
             });
 
-            // Search Listener
+            // Search Listener with Debounce
             searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase();
-                renderSearch(query);
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    const query = e.target.value.toLowerCase();
+                    if(query.length > 1) {
+                         searchITunes(query);
+                    } else {
+                        renderSearch('');
+                    }
+                }, 400); // 400ms debounce
             });
         };
+
+        // --- ITUNES & YOUTUBE API LOGIC ---
+
+        async function searchITunes(term) {
+             const html = `
+                <div class="flex gap-2 mb-6">
+                    <button class="px-3 py-1 bg-white text-black rounded-full text-sm font-medium">All</button>
+                    <button class="px-3 py-1 bg-[#2a2a2a] text-white hover:bg-[#3a3a3a] rounded-full text-sm font-medium">Songs</button>
+                </div>
+                <div class="text-center mt-12"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
+             `;
+             searchView.innerHTML = html;
+
+             try {
+                 const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=20`);
+                 const data = await res.json();
+                 
+                 const results = data.results.map((track, i) => ({
+                    id: track.trackId,
+                    title: track.trackName,
+                    artist: track.artistName,
+                    album: track.collectionName,
+                    cover: track.artworkUrl100.replace('100x100', '600x600'),
+                    duration: track.trackTimeMillis / 1000,
+                    color: "from-gray-700", // Default color
+                    hex: "#374151",
+                    preview: track.previewUrl, // M4A preview 30s
+                    // We don't have YouTube ID yet, we fetch it on click
+                 }));
+                 
+                 renderSearchResults(results, term);
+
+             } catch (e) {
+                 console.error(e);
+                 searchView.innerHTML = `<div class="text-white pt-8">Error fetching songs. Please try again.</div>`;
+             }
+        }
+
+        async function findYouTubeId(track) {
+            // Uses a public Invidious/Piped instance to find video ID without API Key
+            try {
+                const query = `${track.title} ${track.artist} audio`;
+                const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=music_songs`);
+                const data = await res.json();
+                if(data.items && data.items.length > 0) {
+                    // Find first video
+                    const videoId = data.items[0].url.split('v=')[1];
+                    return videoId;
+                }
+            } catch(e) {
+                console.warn("Piped API failed, trying fallback...", e);
+            }
+            return null;
+        }
 
         // --- YOUTUBE API ---
         function onYouTubeIframeAPIReady() {
@@ -385,7 +438,10 @@
                 playerVars: {
                     'playsinline': 1,
                     'controls': 0,
-                    'disablekb': 1
+                    'disablekb': 1,
+                    'fs': 0,
+                    'rel': 0,        // No related videos
+                    'modestbranding': 1 // Cleaner UI
                 },
                 events: {
                     'onReady': onPlayerReady,
@@ -538,14 +594,12 @@
                         `).join('')}
                     </div>
                 `;
-            } else {
-                // Filtered Results
-                const filtered = SONGS.filter(s => 
-                    s.title.toLowerCase().includes(query) || 
-                    s.artist.toLowerCase().includes(query)
-                );
-                
-                let html = `
+                lucide.createIcons();
+            } 
+        }
+
+        function renderSearchResults(results, query) {
+             let html = `
                 <div class="flex gap-2 mb-6">
                     <button class="px-3 py-1 bg-white text-black rounded-full text-sm font-medium">All</button>
                     <button class="px-3 py-1 bg-[#2a2a2a] text-white hover:bg-[#3a3a3a] rounded-full text-sm font-medium">Songs</button>
@@ -553,19 +607,19 @@
                 <div class="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8 mb-8">
                 `;
 
-                if (filtered.length > 0) {
+                if (results.length > 0) {
                     // Top Result
-                    const top = filtered[0];
+                    const top = results[0];
                     html += `
                     <div>
                         <h2 class="text-2xl font-bold text-white mb-4">Top result</h2>
-                        <div onclick="playSong(${top.id})" class="bg-[#181818] p-5 rounded-lg hover:bg-[#282828] transition-colors group cursor-pointer relative">
+                        <div onclick="playSearchedSong(${top.id})" class="bg-[#181818] p-5 rounded-lg hover:bg-[#282828] transition-colors group cursor-pointer relative">
                             <img src="${top.cover}" class="h-24 w-24 rounded shadow-lg mb-4">
-                            <h1 class="text-3xl font-bold text-white mb-2">${top.title}</h1>
+                            <h1 class="text-3xl font-bold text-white mb-2 line-clamp-1">${top.title}</h1>
                             <div class="flex items-center gap-2">
                                 <span class="text-[#b3b3b3] text-sm font-medium">Song</span>
                                 <span class="w-1 h-1 bg-white rounded-full"></span>
-                                <span class="text-white text-sm font-medium">${top.artist}</span>
+                                <span class="text-white text-sm font-medium line-clamp-1">${top.artist}</span>
                             </div>
                             <div class="absolute right-8 bottom-8 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
                                 <div class="bg-[#1ed760] p-3 rounded-full shadow-xl flex items-center justify-center">
@@ -576,18 +630,18 @@
                     </div>
                     <div>
                         <h2 class="text-2xl font-bold text-white mb-4">Songs</h2>
-                        ${filtered.slice(0, 4).map((s, i) => `
-                            <div onclick="playSong(${s.id})" class="group grid grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 text-sm text-[#b3b3b3] hover:bg-[#2a2a2a] rounded-md items-center cursor-default ${currentTrack.id === s.id ? 'text-[#1ed760]' : ''}">
+                        ${results.slice(0, 4).map((s, i) => `
+                            <div onclick="playSearchedSong(${s.id})" class="group grid grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 text-sm text-[#b3b3b3] hover:bg-[#2a2a2a] rounded-md items-center cursor-default ${currentTrack.id == s.id ? 'text-[#1ed760]' : ''}">
                                 <div class="flex items-center justify-center w-4 relative">
-                                    <span class="group-hover:hidden ${currentTrack.id === s.id ? 'text-[#1ed760]' : 'text-[#b3b3b3]'}">${currentTrack.id === s.id && isPlaying ? '<img src="https://open.spotifycdn.com/cdn/images/equaliser-animated-green.f93a2ef4.gif" class="h-3 w-3">' : i + 1}</span>
+                                    <span class="group-hover:hidden ${currentTrack.id == s.id ? 'text-[#1ed760]' : 'text-[#b3b3b3]'}">${currentTrack.id == s.id && isPlaying ? '<img src="https://open.spotifycdn.com/cdn/images/equaliser-animated-green.f93a2ef4.gif" class="h-3 w-3">' : i + 1}</span>
                                     <span class="hidden group-hover:block text-white">
-                                        <i data-lucide="${currentTrack.id === s.id && isPlaying ? 'pause' : 'play'}" class="w-4 h-4 text-white fill-white"></i>
+                                        <i data-lucide="${currentTrack.id == s.id && isPlaying ? 'pause' : 'play'}" class="w-4 h-4 text-white fill-white"></i>
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <img src="${s.cover}" class="h-10 w-10 rounded shadow-md">
                                     <div class="flex flex-col">
-                                        <span class="font-normal truncate text-base ${currentTrack.id === s.id ? 'text-[#1ed760]' : 'text-white'}">${s.title}</span>
+                                        <span class="font-normal truncate text-base ${currentTrack.id == s.id ? 'text-[#1ed760]' : 'text-white'}">${s.title}</span>
                                         <span class="text-xs group-hover:text-white transition-colors">${s.artist}</span>
                                     </div>
                                 </div>
@@ -605,8 +659,10 @@
 
                 html += `</div>`;
                 searchView.innerHTML = html;
-            }
-            lucide.createIcons();
+                lucide.createIcons();
+
+                // Store results for easy access
+                window.lastSearchResults = results;
         }
 
         // --- AUDIO LOGIC ---
@@ -625,36 +681,65 @@
             document.getElementById('fs-total-time').innerText = formatTime(track.duration);
             
             // Update Home Gradient
-            document.getElementById('home-gradient').className = `absolute top-0 left-0 w-full h-[350px] bg-gradient-to-b ${track.color} to-[#121212] opacity-40 pointer-events-none z-0 transition-colors duration-1000`;
+            document.getElementById('home-gradient').className = `absolute top-0 left-0 w-full h-[350px] bg-gradient-to-b ${track.color || 'from-gray-700'} to-[#121212] opacity-40 pointer-events-none z-0 transition-colors duration-1000`;
             
             // Update Fullscreen Gradient
-            document.getElementById('fs-gradient').className = `absolute inset-0 bg-gradient-to-b ${track.color} to-black opacity-90 pointer-events-none`;
+            document.getElementById('fs-gradient').className = `absolute inset-0 bg-gradient-to-b ${track.color || 'from-gray-800'} to-black opacity-90 pointer-events-none`;
         }
 
         // Loads track and triggers YT Player
-        function loadTrack(track) {
+        async function loadTrack(track) {
             currentTrack = track;
             loadTrackDataOnly(track);
 
+            // If we don't have a YouTube ID yet, fetch it
+            if (!track.youtubeId) {
+                // Show loading state in player button if needed
+                const fetchedId = await findYouTubeId(track);
+                if (fetchedId) {
+                    track.youtubeId = fetchedId;
+                } else {
+                    console.error("Could not find YouTube ID");
+                    return;
+                }
+            }
+
             if (player && player.loadVideoById) {
                 player.loadVideoById(track.youtubeId);
-                // Video will autoplay due to loadVideoById, trigger state change which handles UI
+                // Video will autoplay due to loadVideoById
             }
 
             progress = 0;
             updateProgressUI();
             
             // Re-render search to update green text if active
-            if(currentView === 'search' && searchInput.value) renderSearch(searchInput.value);
+            if(currentView === 'search' && searchInput.value) {
+                 // Re-highlight
+                 const btns = document.querySelectorAll('#search-view .text-[#1ed760]');
+                 btns.forEach(b => b.classList.remove('text-[#1ed760]'));
+            }
         }
 
         function playSong(id) {
+            // For main list playback
             const track = SONGS.find(s => s.id === id);
             if (currentTrack.id === track.id) {
                 togglePlay();
             } else {
                 loadTrack(track);
-                // isPlaying will be set to true by onPlayerStateChange
+            }
+        }
+        
+        async function playSearchedSong(id) {
+            if(!window.lastSearchResults) return;
+            const track = window.lastSearchResults.find(s => s.id == id);
+            
+            if (currentTrack.id == track.id) {
+                togglePlay();
+            } else {
+                await loadTrack(track);
+                // Force update UI to show green
+                searchITunes(searchInput.value); 
             }
         }
 
@@ -689,15 +774,20 @@
         }
 
         function playNext() {
+            // Very simple logic: if in top hits, play next top hit
             const idx = SONGS.findIndex(s => s.id === currentTrack.id);
-            const next = SONGS[(idx + 1) % SONGS.length];
-            loadTrack(next);
+            if(idx !== -1) {
+                const next = SONGS[(idx + 1) % SONGS.length];
+                loadTrack(next);
+            }
         }
 
         function playPrev() {
             const idx = SONGS.findIndex(s => s.id === currentTrack.id);
-            const prev = SONGS[(idx - 1 + SONGS.length) % SONGS.length];
-            loadTrack(prev);
+            if(idx !== -1) {
+                const prev = SONGS[(idx - 1 + SONGS.length) % SONGS.length];
+                loadTrack(prev);
+            }
         }
 
         function updatePlayIcons() {
@@ -711,8 +801,6 @@
             fsBtn.innerHTML = `<i data-lucide="${iconName}" class="w-8 h-8 fill-black ml-1"></i>`;
             
             lucide.createIcons();
-            
-            if(currentView === 'search' && searchInput.value) renderSearch(searchInput.value);
         }
 
         function updateProgressUI(current, duration) {
