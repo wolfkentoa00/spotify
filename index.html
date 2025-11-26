@@ -71,6 +71,9 @@
 </head>
 <body class="flex flex-col h-screen">
 
+    <!-- HIDDEN YOUTUBE PLAYER -->
+    <div id="youtube-player" class="hidden fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none"></div>
+
     <!-- TOP VIEWPORT -->
     <div class="flex flex-1 overflow-hidden p-2 gap-2">
         
@@ -242,9 +245,10 @@
             <button class="text-[#b3b3b3] hover:text-white hidden md:block"><i data-lucide="list-music" class="w-4 h-4"></i></button>
             <button class="text-[#b3b3b3] hover:text-white hidden md:block"><i data-lucide="monitor-speaker" class="w-4 h-4"></i></button>
             <div class="flex items-center gap-2 w-24 group">
-                <i data-lucide="volume-2" class="w-4 h-4 text-[#b3b3b3]"></i>
+                <i id="volume-icon" data-lucide="volume-2" class="w-4 h-4 text-[#b3b3b3]"></i>
                 <div class="h-1 bg-[#4d4d4d] rounded-full flex-1 overflow-hidden relative">
-                    <div class="absolute h-full bg-white group-hover:bg-[#1ed760]" style="width: 80%"></div>
+                    <div id="volume-bar" class="absolute h-full bg-white group-hover:bg-[#1ed760]" style="width: 80%"></div>
+                    <input type="range" min="0" max="100" value="80" class="absolute w-full h-full opacity-0 cursor-pointer z-10" id="volume-slider">
                 </div>
             </div>
             <button onclick="toggleFullScreen(true)" class="text-[#b3b3b3] hover:text-white"><i data-lucide="maximize-2" class="w-4 h-4"></i></button>
@@ -293,18 +297,25 @@
 
     <!-- JAVASCRIPT -->
     <script>
+        // Load YouTube IFrame API
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
         // --- DATA ---
+        // Updated with official Spotify Image URLs (approximate public CDN) and YouTube IDs
         const SONGS = [
-            { id: 1, title: "Cruel Summer", artist: "Taylor Swift", album: "Lover", duration: 178, cover: "https://upload.wikimedia.org/wikipedia/en/c/c1/Taylor_Swift_-_Lover.png", color: "from-pink-500", hex: "#ec4899" },
-            { id: 2, title: "Starboy", artist: "The Weeknd", album: "Starboy", duration: 230, cover: "https://upload.wikimedia.org/wikipedia/en/3/39/The_Weeknd_-_Starboy.png", color: "from-red-600", hex: "#dc2626" },
-            { id: 3, title: "As It Was", artist: "Harry Styles", album: "Harry's House", duration: 167, cover: "https://upload.wikimedia.org/wikipedia/en/d/d5/Harry_Styles_-_As_It_Was.png", color: "from-blue-400", hex: "#60a5fa" },
-            { id: 4, title: "Anti-Hero", artist: "Taylor Swift", album: "Midnights", duration: 200, cover: "https://upload.wikimedia.org/wikipedia/en/9/9f/Midnights_-_Taylor_Swift.png", color: "from-slate-700", hex: "#334155" },
-            { id: 5, title: "Flowers", artist: "Miley Cyrus", album: "Endless Summer Vacation", duration: 200, cover: "https://upload.wikimedia.org/wikipedia/en/6/66/Miley_Cyrus_-_Endless_Summer_Vacation.png", color: "from-amber-500", hex: "#f59e0b" },
-            { id: 6, title: "Kill Bill", artist: "SZA", album: "SOS", duration: 153, cover: "https://upload.wikimedia.org/wikipedia/en/2/2c/SZA_-_SOS.png", color: "from-indigo-800", hex: "#3730a3" },
-            { id: 7, title: "Creep", artist: "Radiohead", album: "Pablo Honey", duration: 238, cover: "https://upload.wikimedia.org/wikipedia/en/0/01/Radiohead_-_Pablo_Honey.png", color: "from-yellow-600", hex: "#ca8a04" },
-            { id: 8, title: "Seven Nation Army", artist: "The White Stripes", album: "Elephant", duration: 231, cover: "https://upload.wikimedia.org/wikipedia/en/d/d2/The_White_Stripes_-_Elephant.png", color: "from-red-800", hex: "#991b1b" },
-            { id: 9, title: "Vampire", artist: "Olivia Rodrigo", album: "GUTS", duration: 219, cover: "https://upload.wikimedia.org/wikipedia/en/0/0d/Olivia_Rodrigo_-_Guts.png", color: "from-purple-700", hex: "#7e22ce" },
-            { id: 10, title: "Paint The Town Red", artist: "Doja Cat", album: "Scarlet", duration: 231, cover: "https://upload.wikimedia.org/wikipedia/en/4/44/Doja_Cat_-_Scarlet.png", color: "from-red-600", hex: "#dc2626" },
+            { id: 1, title: "Cruel Summer", artist: "Taylor Swift", album: "Lover", duration: 178, cover: "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647", color: "from-pink-500", hex: "#ec4899", youtubeId: "ic8j13piAhQ" },
+            { id: 2, title: "Starboy", artist: "The Weeknd", album: "Starboy", duration: 230, cover: "https://i.scdn.co/image/ab67616d0000b2734718e28d24527d9c951a4260", color: "from-red-600", hex: "#dc2626", youtubeId: "34Na4j8AVgA" },
+            { id: 3, title: "As It Was", artist: "Harry Styles", album: "Harry's House", duration: 167, cover: "https://i.scdn.co/image/ab67616d0000b2732e8f4f45e6df8f88114098bc", color: "from-blue-400", hex: "#60a5fa", youtubeId: "H5v3kku4y6Q" },
+            { id: 4, title: "Anti-Hero", artist: "Taylor Swift", album: "Midnights", duration: 200, cover: "https://i.scdn.co/image/ab67616d0000b273bb54dde5369e8c4b45fa8d6c", color: "from-slate-700", hex: "#334155", youtubeId: "b1kbLwvqugk" },
+            { id: 5, title: "Flowers", artist: "Miley Cyrus", album: "Endless Summer Vacation", duration: 200, cover: "https://i.scdn.co/image/ab67616d0000b27358039b5148108c7d342f0a8c", color: "from-amber-500", hex: "#f59e0b", youtubeId: "G7KNmW9a75Y" },
+            { id: 6, title: "Kill Bill", artist: "SZA", album: "SOS", duration: 153, cover: "https://i.scdn.co/image/ab67616d0000b27370dbc9f47669d120ad874ec1", color: "from-indigo-800", hex: "#3730a3", youtubeId: "MSRcC626prw" },
+            { id: 7, title: "Creep", artist: "Radiohead", album: "Pablo Honey", duration: 238, cover: "https://i.scdn.co/image/ab67616d0000b273df55e326ed144ab4f5cecf95", color: "from-yellow-600", hex: "#ca8a04", youtubeId: "XFkzRNyygfk" },
+            { id: 8, title: "Seven Nation Army", artist: "The White Stripes", album: "Elephant", duration: 231, cover: "https://i.scdn.co/image/ab67616d0000b273b54cb118a80373079b940082", color: "from-red-800", hex: "#991b1b", youtubeId: "0J2QdDbelmY" },
+            { id: 9, title: "Vampire", artist: "Olivia Rodrigo", album: "GUTS", duration: 219, cover: "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d", color: "from-purple-700", hex: "#7e22ce", youtubeId: "RlPNh_PBZb4" },
+            { id: 10, title: "Paint The Town Red", artist: "Doja Cat", album: "Scarlet", duration: 231, cover: "https://i.scdn.co/image/ab67616d0000b27372bf1b4907106c579c5c2a47", color: "from-red-600", hex: "#dc2626", youtubeId: "m4_9TFeMfJE" },
         ];
 
         const PLAYLISTS = [
@@ -335,6 +346,7 @@
         let isShuffle = false;
         let isRepeat = false;
         let currentView = 'home';
+        let player; // YouTube Player Instance
         
         // --- DOM ELEMENTS ---
         const homeView = document.getElementById('home-view');
@@ -348,7 +360,7 @@
             renderLibrary();
             renderHome();
             renderSearch(); // Pre-render search
-            loadTrack(currentTrack);
+            loadTrackDataOnly(currentTrack); // Load initial visual data
             lucide.createIcons();
             
             // Scroll Listener
@@ -363,6 +375,48 @@
                 renderSearch(query);
             });
         };
+
+        // --- YOUTUBE API ---
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '0',
+                width: '0',
+                videoId: currentTrack.youtubeId,
+                playerVars: {
+                    'playsinline': 1,
+                    'controls': 0,
+                    'disablekb': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            // Player is ready
+            updateVolumeUI();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                isPlaying = true;
+                updatePlayIcons();
+                startTimer();
+            } else if (event.data == YT.PlayerState.PAUSED) {
+                isPlaying = false;
+                updatePlayIcons();
+                stopTimer();
+            } else if (event.data == YT.PlayerState.ENDED) {
+                if (isRepeat) {
+                    player.seekTo(0);
+                    player.playVideo();
+                } else {
+                    playNext();
+                }
+            }
+        }
 
         // --- ROUTING ---
         function router(page) {
@@ -556,9 +610,9 @@
         }
 
         // --- AUDIO LOGIC ---
-        function loadTrack(track) {
-            currentTrack = track;
-            
+        
+        // Updates UI immediately, doesn't start playing
+        function loadTrackDataOnly(track) {
             // Update Text
             document.querySelectorAll('#player-title, #side-title, #fs-title').forEach(el => el.innerText = track.title);
             document.querySelectorAll('#player-artist, #side-artist, #fs-artist, #side-artist-name').forEach(el => el.innerText = track.artist);
@@ -566,7 +620,7 @@
             // Update Images
             document.querySelectorAll('#player-cover, #side-cover, #side-artist-img, #fs-cover').forEach(el => el.src = track.cover);
             
-            // Update Time
+            // Update Time (Static)
             document.getElementById('total-time').innerText = formatTime(track.duration);
             document.getElementById('fs-total-time').innerText = formatTime(track.duration);
             
@@ -575,6 +629,17 @@
             
             // Update Fullscreen Gradient
             document.getElementById('fs-gradient').className = `absolute inset-0 bg-gradient-to-b ${track.color} to-black opacity-90 pointer-events-none`;
+        }
+
+        // Loads track and triggers YT Player
+        function loadTrack(track) {
+            currentTrack = track;
+            loadTrackDataOnly(track);
+
+            if (player && player.loadVideoById) {
+                player.loadVideoById(track.youtubeId);
+                // Video will autoplay due to loadVideoById, trigger state change which handles UI
+            }
 
             progress = 0;
             updateProgressUI();
@@ -589,29 +654,34 @@
                 togglePlay();
             } else {
                 loadTrack(track);
-                isPlaying = true;
-                startTimer();
-                updatePlayIcons();
+                // isPlaying will be set to true by onPlayerStateChange
             }
         }
 
         function togglePlay() {
-            isPlaying = !isPlaying;
-            updatePlayIcons();
-            if (isPlaying) startTimer();
-            else stopTimer();
+            if (!player) return;
+            
+            if (isPlaying) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
         }
 
         function startTimer() {
             stopTimer(); // Clear existing
             progressInterval = setInterval(() => {
-                progress++;
-                if (progress >= currentTrack.duration) {
-                    playNext();
-                } else {
-                    updateProgressUI();
+                if (player && player.getCurrentTime) {
+                    const currentTime = player.getCurrentTime();
+                    const duration = player.getDuration();
+                    
+                    if (duration > 0) {
+                        progress = currentTime;
+                        // document.getElementById('total-time').innerText = formatTime(duration); // Update total time from YT actual if needed
+                        updateProgressUI(currentTime, duration);
+                    }
                 }
-            }, 1000);
+            }, 500);
         }
 
         function stopTimer() {
@@ -622,14 +692,12 @@
             const idx = SONGS.findIndex(s => s.id === currentTrack.id);
             const next = SONGS[(idx + 1) % SONGS.length];
             loadTrack(next);
-            if(isPlaying) startTimer();
         }
 
         function playPrev() {
             const idx = SONGS.findIndex(s => s.id === currentTrack.id);
             const prev = SONGS[(idx - 1 + SONGS.length) % SONGS.length];
             loadTrack(prev);
-            if(isPlaying) startTimer();
         }
 
         function updatePlayIcons() {
@@ -647,13 +715,26 @@
             if(currentView === 'search' && searchInput.value) renderSearch(searchInput.value);
         }
 
-        function updateProgressUI() {
-            const pct = (progress / currentTrack.duration) * 100;
+        function updateProgressUI(current, duration) {
+            if (!duration) duration = currentTrack.duration; // Fallback
+            if (!current) current = 0;
+
+            const pct = (current / duration) * 100;
             document.getElementById('progress-bar').style.width = `${pct}%`;
             document.getElementById('fs-progress-bar').style.width = `${pct}%`;
-            document.getElementById('current-time').innerText = formatTime(progress);
-            document.getElementById('fs-current-time').innerText = formatTime(progress);
+            document.getElementById('current-time').innerText = formatTime(current);
+            document.getElementById('fs-current-time').innerText = formatTime(current);
             document.getElementById('seek-slider').value = pct;
+        }
+        
+        function updateVolumeUI() {
+             const vol = document.getElementById('volume-slider').value;
+             document.getElementById('volume-bar').style.width = `${vol}%`;
+             if (player && player.setVolume) player.setVolume(vol);
+             
+             // Icon logic
+             const icon = document.getElementById('volume-icon');
+             // Simplistic icon update, normally would swap lucide icons
         }
 
         // --- UTILS ---
@@ -690,9 +771,15 @@
         // Seek Listener
         document.getElementById('seek-slider').addEventListener('input', (e) => {
             const pct = e.target.value;
-            progress = Math.floor((pct / 100) * currentTrack.duration);
-            updateProgressUI();
+            if (player && player.getDuration) {
+                const duration = player.getDuration();
+                const seekTo = (pct / 100) * duration;
+                player.seekTo(seekTo, true);
+            }
         });
+        
+        // Volume Listener
+        document.getElementById('volume-slider').addEventListener('input', updateVolumeUI);
 
     </script>
 </body>
