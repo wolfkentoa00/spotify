@@ -1,0 +1,686 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+  Home, Search, Library, Plus, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, 
+  Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Mic2, ListMusic, 
+  MonitorSpeaker, Volume2, Volume1, VolumeX, Maximize2, Minimize2, 
+  Heart, MoreHorizontal, Clock3, User, Settings, Bell, Download, X, GripHorizontal
+} from 'lucide-react';
+
+/* --- MOCK DATA --- */
+const SONGS = [
+  { id: 1, title: "Cruel Summer", artist: "Taylor Swift", album: "Lover", duration: 178, cover: "https://upload.wikimedia.org/wikipedia/en/c/c1/Taylor_Swift_-_Lover.png", color: "from-pink-500" },
+  { id: 2, title: "Starboy", artist: "The Weeknd", album: "Starboy", duration: 230, cover: "https://upload.wikimedia.org/wikipedia/en/3/39/The_Weeknd_-_Starboy.png", color: "from-red-600" },
+  { id: 3, title: "As It Was", artist: "Harry Styles", album: "Harry's House", duration: 167, cover: "https://upload.wikimedia.org/wikipedia/en/d/d5/Harry_Styles_-_As_It_Was.png", color: "from-blue-400" },
+  { id: 4, title: "Anti-Hero", artist: "Taylor Swift", album: "Midnights", duration: 200, cover: "https://upload.wikimedia.org/wikipedia/en/9/9f/Midnights_-_Taylor_Swift.png", color: "from-slate-700" },
+  { id: 5, title: "Flowers", artist: "Miley Cyrus", album: "Endless Summer Vacation", duration: 200, cover: "https://upload.wikimedia.org/wikipedia/en/6/66/Miley_Cyrus_-_Endless_Summer_Vacation.png", color: "from-amber-500" },
+  { id: 6, title: "Kill Bill", artist: "SZA", album: "SOS", duration: 153, cover: "https://upload.wikimedia.org/wikipedia/en/2/2c/SZA_-_SOS.png", color: "from-indigo-800" },
+  { id: 7, title: "Creep", artist: "Radiohead", album: "Pablo Honey", duration: 238, cover: "https://upload.wikimedia.org/wikipedia/en/0/01/Radiohead_-_Pablo_Honey.png", color: "from-yellow-600" },
+  { id: 8, title: "Seven Nation Army", artist: "The White Stripes", album: "Elephant", duration: 231, cover: "https://upload.wikimedia.org/wikipedia/en/d/d2/The_White_Stripes_-_Elephant.png", color: "from-red-800" },
+  { id: 9, title: "Vampire", artist: "Olivia Rodrigo", album: "GUTS", duration: 219, cover: "https://upload.wikimedia.org/wikipedia/en/0/0d/Olivia_Rodrigo_-_Guts.png", color: "from-purple-700" },
+  { id: 10, title: "Paint The Town Red", artist: "Doja Cat", album: "Scarlet", duration: 231, cover: "https://upload.wikimedia.org/wikipedia/en/4/44/Doja_Cat_-_Scarlet.png", color: "from-red-600" },
+  { id: 11, title: "Dance The Night", artist: "Dua Lipa", album: "Barbie The Album", duration: 176, cover: "https://upload.wikimedia.org/wikipedia/en/0/0b/Barbie_The_Album.png", color: "from-pink-400" },
+  { id: 12, title: "Bad Habit", artist: "Steve Lacy", album: "Gemini Rights", duration: 232, cover: "https://upload.wikimedia.org/wikipedia/en/b/b3/Gemini_Rights.png", color: "from-green-700" },
+  { id: 13, title: "Sweater Weather", artist: "The Neighbourhood", album: "I Love You.", duration: 240, cover: "https://upload.wikimedia.org/wikipedia/en/2/22/The_Neighbourhood_-_I_Love_You.png", color: "from-gray-500" },
+  { id: 14, title: "Blinding Lights", artist: "The Weeknd", album: "After Hours", duration: 200, cover: "https://upload.wikimedia.org/wikipedia/en/c/c1/The_Weeknd_-_After_Hours.png", color: "from-red-600" },
+  { id: 15, title: "Shape of You", artist: "Ed Sheeran", album: "Divide", duration: 233, cover: "https://upload.wikimedia.org/wikipedia/en/4/45/Divide_cover.png", color: "from-blue-300" },
+];
+
+const PLAYLISTS = [
+  { id: 1, name: "Liked Songs", owner: "You", cover: "https://misc.scdn.co/liked-songs/liked-songs-640.png", type: "Playlist", color: "from-purple-700" },
+  { id: 2, name: "Discover Weekly", owner: "Spotify", cover: "https://newjams-images.scdn.co/image/ab676477000033ad/dt/v3/discover-weekly/aAbca4VNfzWuUCQ_FGiEFA==/bmVuZW5lbmVuZW5lbmVuZQ==", type: "Playlist", color: "from-blue-800" },
+  { id: 3, name: "On Repeat", owner: "Spotify", cover: "https://daily-mix.scdn.co/covers/on_repeat_PPM_DEFAULT_large_en.jpg", type: "Playlist", color: "from-teal-600" },
+  { id: 4, name: "Daily Mix 1", owner: "Spotify", cover: "https://dailymix-images.scdn.co/v2/img/ab6761610000e5ebcfc6347e3a992850942544e3/1/en/default", type: "Playlist", color: "from-yellow-500" },
+  { id: 5, name: "Release Radar", owner: "Spotify", cover: "https://newjams-images.scdn.co/v3/release-radar/ab6761610000e5ebcfc6347e3a992850942544e3/en/large", type: "Playlist", color: "from-gray-500" },
+  { id: 6, name: "Top Hits 2024", owner: "Spotify", cover: "https://charts-images.scdn.co/assets/locale_en/regional/weekly/region_global_default.jpg", type: "Playlist", color: "from-blue-500" },
+];
+
+const CATEGORIES = [
+  { id: "podcasts", name: "Podcasts", color: "bg-red-500" },
+  { id: "live", name: "Live Events", color: "bg-purple-500" },
+  { id: "madeforyou", name: "Made For You", color: "bg-blue-800" },
+  { id: "new", name: "New Releases", color: "bg-pink-500" },
+  { id: "pop", name: "Pop", color: "bg-green-500" },
+  { id: "hiphop", name: "Hip-Hop", color: "bg-orange-500" },
+  { id: "rock", name: "Rock", color: "bg-red-700" },
+  { id: "latin", name: "Latin", color: "bg-yellow-500" },
+  { id: "charts", name: "Charts", color: "bg-indigo-500" },
+  { id: "workout", name: "Workout", color: "bg-teal-500" },
+  { id: "mood", name: "Mood", color: "bg-violet-500" },
+  { id: "party", name: "Party", color: "bg-blue-400" },
+];
+
+/* --- UTILS --- */
+const formatTime = (seconds) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+};
+
+/* --- COMPONENTS --- */
+
+const Tooltip = ({ children, text }) => (
+  <div className="group relative flex">
+    {children}
+    <span className="absolute -top-10 left-1/2 -translate-x-1/2 scale-0 transition-all rounded bg-[#282828] p-2 text-xs text-white group-hover:scale-100 whitespace-nowrap z-50 shadow-xl font-medium">
+      {text}
+    </span>
+  </div>
+);
+
+const SongRow = ({ song, index, isCurrent, isPlaying, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`group grid grid-cols-[16px_4fr_3fr_minmax(120px,1fr)] gap-4 px-4 py-2 text-sm text-[#b3b3b3] hover:bg-[#2a2a2a] rounded-md items-center cursor-default ${isCurrent ? 'bg-[#2a2a2a]' : ''}`}
+  >
+    <div className="flex items-center justify-center w-4 relative">
+      <span className={`group-hover:hidden ${isCurrent ? 'text-[#1ed760]' : ''}`}>
+        {isCurrent && isPlaying ? <img src="https://open.spotifycdn.com/cdn/images/equaliser-animated-green.f93a2ef4.gif" className="h-3 w-3" alt="playing"/> : index + 1}
+      </span>
+      <span className="hidden group-hover:block text-white">
+        {isCurrent && isPlaying ? <Pause size={16} fill="white" /> : <Play size={16} fill="white" />}
+      </span>
+    </div>
+    <div className="flex items-center gap-4">
+      <img src={song.cover} alt={song.title} className="h-10 w-10 rounded shadow-md" />
+      <div className="flex flex-col">
+        <span className={`font-normal truncate text-base ${isCurrent ? 'text-[#1ed760]' : 'text-white'}`}>{song.title}</span>
+        <span className="text-xs group-hover:text-white transition-colors">{song.artist}</span>
+      </div>
+    </div>
+    <span className="hidden md:block hover:text-white hover:underline cursor-pointer truncate">{song.album}</span>
+    <div className="flex items-center justify-between">
+      <span className="hidden group-hover:block"><Heart size={16} className="hover:text-white cursor-pointer"/></span>
+      <span className="font-variant-numeric tabular-nums">{formatTime(song.duration)}</span>
+      <span className="hidden group-hover:block"><MoreHorizontal size={16} className="hover:text-white cursor-pointer"/></span>
+    </div>
+  </div>
+);
+
+const Card = ({ title, subtitle, img, type, onClick }) => (
+  <div 
+    onClick={onClick}
+    className="group bg-[#181818] p-4 rounded-lg hover:bg-[#282828] transition-all duration-300 cursor-pointer flex flex-col gap-4 relative"
+  >
+    <div className="relative shadow-lg rounded-md overflow-hidden aspect-square">
+      <img src={img} alt={title} className={`w-full h-full object-cover ${type === 'Artist' ? 'rounded-full' : 'rounded-md'}`} />
+      <div className="absolute bottom-2 right-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-xl">
+        <button className="bg-[#1ed760] rounded-full p-3 hover:scale-105 hover:bg-[#1fdf64] transition-transform text-black">
+          <Play size={24} fill="black" />
+        </button>
+      </div>
+    </div>
+    <div className="flex flex-col gap-1 min-h-[60px]">
+      <h3 className="text-white font-bold truncate">{title}</h3>
+      <p className="text-[#b3b3b3] text-sm line-clamp-2">{subtitle}</p>
+    </div>
+  </div>
+);
+
+/* --- MAIN APP --- */
+export default function SpotifyRemake() {
+  const [view, setView] = useState('home'); // home, search, library, settings
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentTrack, setCurrentTrack] = useState(SONGS[0]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(0.8);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [navBackgroundOpacity, setNavBackgroundOpacity] = useState(0);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
+  const mainScrollRef = useRef(null);
+  
+  // Filtered Lists
+  const filteredSongs = useMemo(() => {
+    if (!searchQuery) return SONGS;
+    const lower = searchQuery.toLowerCase();
+    return SONGS.filter(s => s.title.toLowerCase().includes(lower) || s.artist.toLowerCase().includes(lower) || s.album.toLowerCase().includes(lower));
+  }, [searchQuery]);
+
+  // Audio Logic Simulation
+  useEffect(() => {
+    let interval;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= currentTrack.duration) {
+            // Auto skip logic
+            handleNext();
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, currentTrack]);
+
+  // Handle Scroll Transparency
+  useEffect(() => {
+    const handleScroll = () => {
+      if (mainScrollRef.current) {
+        const scrollTop = mainScrollRef.current.scrollTop;
+        const opacity = Math.min(scrollTop / 200, 1);
+        setNavBackgroundOpacity(opacity);
+      }
+    };
+    const el = mainScrollRef.current;
+    if (el) el.addEventListener('scroll', handleScroll);
+    return () => el && el.removeEventListener('scroll', handleScroll);
+  }, [view]);
+
+  const handlePlay = (track) => {
+    if (currentTrack.id === track.id) {
+      setIsPlaying(!isPlaying);
+    } else {
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      setProgress(0);
+    }
+  };
+
+  const handleNext = () => {
+    const currentIndex = SONGS.findIndex(s => s.id === currentTrack.id);
+    const nextIndex = (currentIndex + 1) % SONGS.length;
+    setCurrentTrack(SONGS[nextIndex]);
+    setProgress(0);
+  };
+
+  const handlePrev = () => {
+    const currentIndex = SONGS.findIndex(s => s.id === currentTrack.id);
+    const prevIndex = (currentIndex - 1 + SONGS.length) % SONGS.length;
+    setCurrentTrack(SONGS[prevIndex]);
+    setProgress(0);
+  };
+
+  /* --- SUB-VIEWS --- */
+  
+  const HomeView = () => (
+    <div className="pb-8">
+      {/* Gradient Backdrop */}
+      <div className={`absolute top-0 left-0 w-full h-[350px] bg-gradient-to-b ${currentTrack.color} to-[#121212] opacity-40 pointer-events-none z-0`} />
+      
+      <div className="relative z-10 px-6 pt-6">
+        <h2 className="text-3xl font-bold text-white mb-6">{getGreeting()}</h2>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+          {PLAYLISTS.slice(0, 6).map(playlist => (
+            <div key={playlist.id} className="group flex items-center bg-[#2b2b2b]/40 hover:bg-[#2b2b2b] rounded overflow-hidden cursor-pointer transition-colors duration-300">
+              <img src={playlist.cover} alt={playlist.name} className="h-16 w-16 object-cover shadow-lg" />
+              <span className="font-bold text-white px-4 flex-1 truncate">{playlist.name}</span>
+              <div className="bg-[#1ed760] rounded-full p-3 mr-4 opacity-0 group-hover:opacity-100 shadow-xl scale-95 group-hover:scale-100 transition-all">
+                <Play fill="black" size={20} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Section title="Made For You" items={PLAYLISTS} />
+        <Section title="Your Top Mixes" items={PLAYLISTS.slice().reverse()} />
+        <Section title="Recently Played" items={PLAYLISTS.slice(2, 5)} />
+      </div>
+    </div>
+  );
+
+  const Section = ({ title, items }) => (
+    <div className="mb-8">
+      <div className="flex justify-between items-end mb-4">
+        <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">{title}</h2>
+        <span className="text-sm font-bold text-[#b3b3b3] hover:underline cursor-pointer uppercase tracking-wider">Show all</span>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+        {items.map(item => (
+          <Card 
+            key={item.id} 
+            title={item.name} 
+            subtitle={`By ${item.owner}`} 
+            img={item.cover} 
+            type={item.type}
+            onClick={() => {
+              // Simulate opening playlist
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  const SearchView = () => (
+    <div className="px-6 pt-4 pb-8">
+      {!searchQuery ? (
+        <>
+          <h2 className="text-2xl font-bold text-white mb-4">Browse all</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {CATEGORIES.map(cat => (
+              <div 
+                key={cat.id} 
+                className={`${cat.color} aspect-[1.7] rounded-lg p-4 relative overflow-hidden cursor-pointer hover:opacity-90 transition-opacity`}
+              >
+                <h3 className="text-2xl font-bold text-white max-w-[80%] break-words">{cat.name}</h3>
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/2048px-Spotify_logo_without_text.svg.png" 
+                  className="absolute -bottom-4 -right-4 w-24 h-24 rotate-[25deg] shadow-lg grayscale opacity-50"
+                  alt=""
+                />
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div>
+          <div className="flex gap-2 mb-6">
+            <button className="px-3 py-1 bg-white text-black rounded-full text-sm font-medium">All</button>
+            <button className="px-3 py-1 bg-[#2a2a2a] text-white hover:bg-[#3a3a3a] rounded-full text-sm font-medium">Songs</button>
+            <button className="px-3 py-1 bg-[#2a2a2a] text-white hover:bg-[#3a3a3a] rounded-full text-sm font-medium">Artists</button>
+            <button className="px-3 py-1 bg-[#2a2a2a] text-white hover:bg-[#3a3a3a] rounded-full text-sm font-medium">Playlists</button>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8 mb-8">
+             {/* Top Result */}
+             {filteredSongs.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-4">Top result</h2>
+                  <div className="bg-[#181818] p-5 rounded-lg hover:bg-[#282828] transition-colors group cursor-pointer">
+                    <img src={filteredSongs[0].cover} alt="" className="h-24 w-24 rounded shadow-lg mb-4" />
+                    <h1 className="text-3xl font-bold text-white mb-2">{filteredSongs[0].title}</h1>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#b3b3b3] text-sm font-medium">Song</span>
+                      <span className="w-1 h-1 bg-white rounded-full" />
+                      <span className="text-white text-sm font-medium">{filteredSongs[0].artist}</span>
+                    </div>
+                     <div className="absolute right-8 bottom-8 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                         <div className="bg-[#1ed760] p-3 rounded-full shadow-xl">
+                            <Play fill="black" size={24} />
+                         </div>
+                     </div>
+                  </div>
+                </div>
+             )}
+             
+             {/* Songs List */}
+             <div>
+                <h2 className="text-2xl font-bold text-white mb-4">Songs</h2>
+                {filteredSongs.slice(0, 4).map((song, i) => (
+                  <SongRow 
+                    key={song.id} 
+                    song={song} 
+                    index={i} 
+                    isCurrent={currentTrack.id === song.id} 
+                    isPlaying={isPlaying} 
+                    onClick={() => handlePlay(song)}
+                  />
+                ))}
+             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  /* --- FULLSCREEN PLAYER --- */
+  if (isFullScreen) {
+    return (
+      <div className={`fixed inset-0 z-50 flex flex-col bg-gradient-to-b ${currentTrack.color} to-black text-white p-8 animate-in fade-in zoom-in duration-300`}>
+        <div className="flex justify-between items-center mb-8">
+           <div className="flex items-center gap-2 text-white/70 hover:text-white cursor-pointer">
+              <span className="text-xs font-bold tracking-widest uppercase">Playing from playlist</span>
+              <span className="text-xs font-bold">Top Hits 2024</span>
+           </div>
+           <button onClick={() => setIsFullScreen(false)} className="hover:bg-white/10 p-2 rounded-full">
+              <Minimize2 size={24} />
+           </button>
+        </div>
+        
+        <div className="flex-1 flex items-end md:items-center justify-center gap-12 md:gap-24 pb-12">
+           <img src={currentTrack.cover} className="w-[300px] h-[300px] md:w-[600px] md:h-[600px] object-cover rounded-lg shadow-2xl" alt="" />
+           
+           <div className="flex flex-col gap-6 md:w-[400px]">
+              <div>
+                <h1 className="text-4xl md:text-6xl font-bold mb-2">{currentTrack.title}</h1>
+                <h2 className="text-xl md:text-2xl text-white/70">{currentTrack.artist}</h2>
+              </div>
+              
+              <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden mt-4">
+                  <div className="h-full bg-white" style={{ width: `${(progress / currentTrack.duration) * 100}%` }} />
+              </div>
+              <div className="flex justify-between text-xs font-medium text-white/70">
+                 <span>{formatTime(progress)}</span>
+                 <span>{formatTime(currentTrack.duration)}</span>
+              </div>
+
+              <div className="flex justify-between items-center mt-4">
+                 <Shuffle size={24} className={isShuffle ? "text-[#1ed760]" : "text-white/70"} />
+                 <SkipBack size={32} className="hover:scale-110 transition" onClick={handlePrev} />
+                 <button 
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="bg-white text-black p-5 rounded-full hover:scale-105 transition"
+                 >
+                    {isPlaying ? <Pause size={32} fill="black"/> : <Play size={32} fill="black"/>}
+                 </button>
+                 <SkipForward size={32} className="hover:scale-110 transition" onClick={handleNext} />
+                 <Repeat size={24} className={isRepeat ? "text-[#1ed760]" : "text-white/70"} />
+              </div>
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen bg-black text-white font-sans overflow-hidden select-none">
+      
+      {/* TOP VIEWPORT (Sidebar + Main) */}
+      <div className="flex flex-1 overflow-hidden p-2 gap-2">
+        
+        {/* LEFT SIDEBAR */}
+        <nav 
+          className="flex flex-col gap-2 h-full bg-black rounded-lg hidden md:flex" 
+          style={{ width: sidebarWidth }}
+        >
+          {/* Top Block */}
+          <div className="bg-[#121212] rounded-lg p-4 flex flex-col gap-4">
+            <button 
+              onClick={() => { setView('home'); setSearchQuery(''); }} 
+              className={`flex items-center gap-4 font-bold transition-colors ${view === 'home' ? 'text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+            >
+              <Home size={24} />
+              Home
+            </button>
+            <button 
+              onClick={() => setView('search')} 
+              className={`flex items-center gap-4 font-bold transition-colors ${view === 'search' ? 'text-white' : 'text-[#b3b3b3] hover:text-white'}`}
+            >
+              <Search size={24} />
+              Search
+            </button>
+          </div>
+
+          {/* Library Block */}
+          <div className="flex-1 bg-[#121212] rounded-lg flex flex-col overflow-hidden">
+            <div className="p-4 shadow-md z-10">
+              <div className="flex justify-between items-center text-[#b3b3b3] mb-4">
+                <button className="flex items-center gap-2 hover:text-white transition-colors font-bold group">
+                  <Library size={24} className="group-hover:text-white" />
+                  Your Library
+                </button>
+                <div className="flex gap-2">
+                  <Tooltip text="Create playlist or folder">
+                    <button className="hover:bg-[#2a2a2a] p-1 rounded-full text-[#b3b3b3] hover:text-white">
+                        <Plus size={20} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip text="Show more">
+                     <button className="hover:bg-[#2a2a2a] p-1 rounded-full text-[#b3b3b3] hover:text-white">
+                        <ArrowRight size={20} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+              
+              {/* Library Filters */}
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                 {['Playlists', 'Artists', 'Albums'].map(t => (
+                    <button key={t} className="px-3 py-1 bg-[#232323] hover:bg-[#2a2a2a] rounded-full text-sm font-medium whitespace-nowrap transition-colors">
+                        {t}
+                    </button>
+                 ))}
+              </div>
+            </div>
+
+            {/* Scrollable Library List */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+               <div className="flex justify-between items-center px-2 mb-2 text-[#b3b3b3] text-sm">
+                   <button className="hover:text-white hover:scale-105 transition-transform"><Search size={16}/></button>
+                   <button className="flex items-center gap-1 hover:text-white hover:scale-105 transition-transform">Recents <ListMusic size={16}/></button>
+               </div>
+               
+               {PLAYLISTS.map(p => (
+                   <div key={p.id} className="flex gap-3 p-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer group">
+                       <img src={p.cover} alt={p.name} className="h-12 w-12 rounded object-cover" />
+                       <div className="flex flex-col justify-center overflow-hidden">
+                           <h4 className="font-normal text-white truncate group-hover:text-white">{p.name}</h4>
+                           <div className="flex items-center gap-1 text-[#b3b3b3] text-sm">
+                              {p.type === 'Playlist' && <span className="text-[#1ed760]"><GripHorizontal size={12} className="rotate-90"/></span>}
+                              <span className="truncate">{p.type} • {p.owner}</span>
+                           </div>
+                       </div>
+                   </div>
+               ))}
+               
+               {/* Filler Content to force scroll */}
+               {Array.from({ length: 10 }).map((_, i) => (
+                   <div key={i} className="flex gap-3 p-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer opacity-50">
+                       <div className="h-12 w-12 bg-[#282828] rounded"></div>
+                       <div className="flex flex-col justify-center gap-2 w-full">
+                           <div className="h-3 w-3/4 bg-[#282828] rounded"></div>
+                           <div className="h-3 w-1/2 bg-[#282828] rounded"></div>
+                       </div>
+                   </div>
+               ))}
+            </div>
+          </div>
+        </nav>
+
+        {/* MAIN CONTENT AREA */}
+        <main className="flex-1 bg-[#121212] rounded-lg relative overflow-hidden flex flex-col">
+          
+          {/* Top Bar */}
+          <header 
+            className="h-[64px] absolute top-0 w-full z-20 flex items-center justify-between px-6 transition-colors duration-300"
+            style={{ backgroundColor: `rgba(18, 18, 18, ${navBackgroundOpacity})` }}
+          >
+             <div className="flex gap-2">
+                <button className="bg-black/70 rounded-full p-1 text-[#b3b3b3] cursor-not-allowed"><ChevronLeft size={22} /></button>
+                <button className="bg-black/70 rounded-full p-1 text-[#b3b3b3] cursor-not-allowed"><ChevronRight size={22} /></button>
+                {view === 'search' && (
+                    <div className="ml-4 relative group">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b3b3b3] group-hover:text-white" size={20} />
+                        <input 
+                            autoFocus
+                            placeholder="What do you want to play?"
+                            className="bg-[#242424] hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] focus:ring-2 focus:ring-white rounded-full py-3 pl-10 pr-4 w-[300px] text-sm text-white placeholder-[#757575] outline-none transition-all"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white"><X size={16}/></button>
+                        )}
+                    </div>
+                )}
+             </div>
+
+             <div className="flex items-center gap-4">
+                 <button className="bg-white text-black text-sm font-bold px-4 py-1.5 rounded-full hover:scale-105 transition-transform hidden sm:block">Explore Premium</button>
+                 <button className="flex items-center gap-2 bg-[#0f0f0f] text-white text-sm font-bold px-3 py-1 rounded-full hover:bg-[#1f1f1f] hover:scale-105 transition-transform hidden sm:flex">
+                    <Download size={16} /> Install App
+                 </button>
+                 <button className="bg-[#0f0f0f] p-2 rounded-full hover:bg-[#1f1f1f] hover:scale-105 transition-transform text-[#b3b3b3] hover:text-white">
+                    <Bell size={18} />
+                 </button>
+                 <button className="bg-[#0f0f0f] p-1.5 rounded-full hover:bg-[#1f1f1f] hover:scale-105 transition-transform">
+                    <div className="h-6 w-6 bg-orange-600 rounded-full flex items-center justify-center text-[10px] font-bold text-black border-2 border-black">D</div>
+                 </button>
+             </div>
+          </header>
+
+          {/* Scrollable View */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar pt-[64px]" ref={mainScrollRef}>
+            {view === 'home' && <HomeView />}
+            {view === 'search' && <SearchView />}
+            
+            {/* Footer Links */}
+            <div className="px-8 pb-8 pt-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm text-[#b3b3b3]">
+               <div className="flex flex-col gap-2">
+                  <span className="text-white font-bold mb-2">Company</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">About</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">Jobs</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">For the Record</span>
+               </div>
+               <div className="flex flex-col gap-2">
+                  <span className="text-white font-bold mb-2">Communities</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">For Artists</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">Developers</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">Advertising</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">Investors</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">Vendors</span>
+               </div>
+               <div className="flex flex-col gap-2">
+                  <span className="text-white font-bold mb-2">Useful links</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">Support</span>
+                  <span className="hover:text-white hover:underline cursor-pointer">Free Mobile App</span>
+               </div>
+            </div>
+          </div>
+        </main>
+        
+        {/* RIGHT SIDEBAR (Now Playing / Friend Activity) - Hidden on small screens */}
+        {rightSidebarOpen && (
+            <aside className="w-[280px] bg-[#121212] rounded-lg p-4 hidden xl:flex flex-col animate-in slide-in-from-right duration-200">
+               <div className="flex justify-between items-center mb-6 text-[#b3b3b3]">
+                   <span className="font-bold hover:text-white cursor-pointer">Top Hits 2024</span>
+                   <button onClick={() => setRightSidebarOpen(false)}><X size={20} className="hover:text-white"/></button>
+               </div>
+               
+               <div className="flex-1 overflow-y-auto custom-scrollbar">
+                   <img src={currentTrack.cover} className="w-full aspect-square rounded-lg shadow-lg mb-4" alt="" />
+                   <div className="flex justify-between items-end mb-4">
+                       <div>
+                           <h2 className="text-2xl font-bold hover:underline cursor-pointer text-white">{currentTrack.title}</h2>
+                           <span className="text-[#b3b3b3] font-medium hover:underline hover:text-white cursor-pointer">{currentTrack.artist}</span>
+                       </div>
+                       <button className="text-[#1ed760]"><Heart fill="#1ed760" size={24} /></button>
+                   </div>
+                   
+                   {/* About the artist */}
+                   <div className="bg-[#242424] rounded-lg overflow-hidden mt-4 relative group">
+                        <div className="absolute top-4 left-4 font-bold text-white z-10">About the artist</div>
+                        <img src={currentTrack.cover} className="w-full h-40 object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" alt="" />
+                        <div className="p-4 relative bg-[#242424]">
+                            <h3 className="font-bold text-white mb-2">{currentTrack.artist}</h3>
+                            <div className="flex justify-between text-[#b3b3b3] text-sm">
+                                <span>25,234,221 monthly listeners</span>
+                                <button className="border border-[#b3b3b3] rounded-full px-3 py-1 hover:border-white hover:text-white font-bold">Follow</button>
+                            </div>
+                            <p className="mt-4 text-[#b3b3b3] text-sm line-clamp-3">
+                                Detailed biography of {currentTrack.artist} would appear here. They are a chart-topping artist with numerous awards.
+                            </p>
+                        </div>
+                   </div>
+                   
+                   <div className="bg-[#242424] rounded-lg p-4 mt-4 flex justify-between items-center hover:bg-[#2a2a2a] cursor-pointer">
+                      <div className="flex flex-col">
+                          <span className="font-bold text-white">Next in queue</span>
+                          <span className="text-[#b3b3b3] text-sm">Open Queue</span>
+                      </div>
+                      <ListMusic className="text-[#b3b3b3]" />
+                   </div>
+               </div>
+            </aside>
+        )}
+      </div>
+
+      {/* PLAYER FOOTER */}
+      <footer className="h-[90px] bg-black border-t border-[#282828] px-4 flex justify-between items-center z-30">
+        
+        {/* Left: Track Info */}
+        <div className="flex items-center gap-4 w-[30%] min-w-[180px]">
+           <img src={currentTrack.cover} className="h-14 w-14 rounded shadow-sm cursor-pointer hover:opacity-80" alt="Cover" onClick={() => setIsFullScreen(true)} />
+           <div className="flex flex-col justify-center overflow-hidden mr-2">
+              <span className="font-sm font-medium text-white hover:underline cursor-pointer truncate">{currentTrack.title}</span>
+              <span className="text-xs text-[#b3b3b3] hover:underline hover:text-white cursor-pointer truncate">{currentTrack.artist}</span>
+           </div>
+           <button className="text-[#b3b3b3] hover:text-white hidden lg:block"><Heart size={18} /></button>
+        </div>
+
+        {/* Center: Controls */}
+        <div className="flex flex-col items-center max-w-[40%] w-full gap-2">
+           <div className="flex items-center gap-6">
+              <button 
+                onClick={() => setIsShuffle(!isShuffle)}
+                className={`transition-colors ${isShuffle ? 'text-[#1ed760]' : 'text-[#b3b3b3] hover:text-white'}`}
+              >
+                  <Shuffle size={16} />
+              </button>
+              <button onClick={handlePrev} className="text-[#b3b3b3] hover:text-white"><SkipBack size={20} fill="currentColor" /></button>
+              <button 
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="bg-white rounded-full p-2 hover:scale-105 transition-transform"
+              >
+                 {isPlaying ? <Pause size={20} fill="black" /> : <Play size={20} fill="black" className="pl-0.5" />}
+              </button>
+              <button onClick={handleNext} className="text-[#b3b3b3] hover:text-white"><SkipForward size={20} fill="currentColor" /></button>
+              <button 
+                onClick={() => setIsRepeat(!isRepeat)}
+                className={`transition-colors ${isRepeat ? 'text-[#1ed760]' : 'text-[#b3b3b3] hover:text-white'}`}
+              >
+                  <Repeat size={16} />
+              </button>
+           </div>
+           
+           <div className="w-full flex items-center gap-2 text-xs font-mono text-[#b3b3b3]">
+              <span>{formatTime(progress)}</span>
+              <div className="h-1 bg-[#4d4d4d] rounded-full flex-1 group cursor-pointer relative overflow-hidden">
+                 <div className="absolute inset-0 bg-white group-hover:bg-[#1ed760]" style={{ width: `${(progress / currentTrack.duration) * 100}%` }}></div>
+                 {/* Draggable handle would go here */}
+              </div>
+              <span>{formatTime(currentTrack.duration)}</span>
+           </div>
+        </div>
+
+        {/* Right: Volume & Extras */}
+        <div className="flex items-center justify-end gap-3 w-[30%] min-w-[180px]">
+            <button onClick={() => setRightSidebarOpen(!rightSidebarOpen)} className={`hidden md:block hover:text-white ${rightSidebarOpen ? 'text-[#1ed760]' : 'text-[#b3b3b3]'}`}>
+                <Play size={18} className="border border-current rounded p-0.5 box-content" />
+            </button>
+            <button className="text-[#b3b3b3] hover:text-white hidden md:block"><Mic2 size={18}/></button>
+            <button className="text-[#b3b3b3] hover:text-white hidden md:block"><ListMusic size={18}/></button>
+            <button className="text-[#b3b3b3] hover:text-white hidden md:block"><MonitorSpeaker size={18}/></button>
+            
+            <div className="flex items-center gap-2 group w-32">
+                <button 
+                    className="text-[#b3b3b3] hover:text-white"
+                    onClick={() => setVolume(v => v === 0 ? 0.8 : 0)}
+                >
+                    {volume === 0 ? <VolumeX size={18} /> : volume < 0.5 ? <Volume1 size={18} /> : <Volume2 size={18} />}
+                </button>
+                <div className="h-1 bg-[#4d4d4d] rounded-full flex-1 overflow-hidden cursor-pointer relative">
+                    <div className="absolute inset-0 bg-white group-hover:bg-[#1ed760]" style={{ width: `${volume * 100}%` }}></div>
+                </div>
+            </div>
+
+            <button onClick={() => setIsFullScreen(true)} className="text-[#b3b3b3] hover:text-white"><Maximize2 size={18} /></button>
+        </div>
+      </footer>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 12px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: hsla(0,0%,100%,.3);
+          border-radius: 20px;
+          border: 3px solid transparent;
+          background-clip: content-box;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: hsla(0,0%,100%,.5);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+      `}</style>
+    </div>
+  );
+}
